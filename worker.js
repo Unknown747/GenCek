@@ -19,7 +19,6 @@ const RPC_URLS = [
     'https://cloudflare-eth.com',
 ]
 
-// ─── RPC pool with latency tracking ──────────────────────────────────
 const rpcPool = RPC_URLS.map(url => ({ url, latency: 999, errors: 0, alive: true }))
 
 function getBestRpc() {
@@ -28,7 +27,6 @@ function getBestRpc() {
     return alive.reduce((a, b) => (a.latency + a.errors * 300 < b.latency + b.errors * 300 ? a : b))
 }
 
-// ─── Raw HTTP ─────────────────────────────────────────────────────────
 function rawRequest(url, body) {
     return new Promise((resolve, reject) => {
         const u = new URL(url)
@@ -52,12 +50,14 @@ function rawRequest(url, body) {
         req.end()
     })
 }
+
+async function batchCheckBalances(wallets) {
+    const requests = wallets.map((w, i) => ({
         jsonrpc: '2.0', method: 'eth_getBalance',
         params: [w.address, 'latest'], id: i,
     }))
     const body = JSON.stringify(requests)
 
-    // Try best RPC first, fallback to next best on error
     const sorted = [...rpcPool].filter(r => r.alive).sort((a, b) =>
         (a.latency + a.errors * 300) - (b.latency + b.errors * 300)
     )
@@ -88,7 +88,6 @@ function rawRequest(url, body) {
     return { checked: wallets.length, funded: [] }
 }
 
-// ─── Telegram ─────────────────────────────────────────────────────────
 function sendTelegram(address, privateKey, ethStr) {
     const token = process.env.TELEGRAM_BOT_TOKEN
     const chat = process.env.TELEGRAM_CHAT_ID
@@ -105,9 +104,26 @@ function sendTelegram(address, privateKey, ethStr) {
     req.write(body)
     req.end()
 }
+
+function saveFunded(wallet, balanceWei) {
+    const eth = Number(balanceWei) / 1e18
+    const ethStr = eth.toFixed(6)
+    const line = `${wallet.address},${wallet.privateKey},${ethStr} ETH\n`
+    fs.appendFileSync(FUNDED_FILE, line)
+    sendTelegram(wallet.address, wallet.privateKey, ethStr)
+    process.send({ type: 'funded', address: wallet.address, eth: ethStr })
 }
 
-// ─── Main loop ────────────────────────────────────────────────────────
+function generateWallet() {
+    const privBytes = randomBytes(32)
+    const pubKey = secp256k1.getPublicKey(privBytes, false).slice(1)
+    const hash = keccak256(pubKey)
+    return {
+        address: '0x' + Buffer.from(hash.slice(12)).toString('hex'),
+        privateKey: '0x' + Buffer.from(privBytes).toString('hex'),
+    }
+}
+
 async function run() {
     while (true) {
         const wallets = Array.from({ length: BATCH_SIZE }, generateWallet)
@@ -121,28 +137,3 @@ run().catch(e => {
     process.send({ type: 'error', msg: e.message })
     process.exit(1)
 })
-
-
-// ─── Batch balance check ──────────────────────────────────────────────
-async function batchCheckBalances(wallets) {
-    const requests = wallets.map((w, i) => ({
-
-// ─── Save funded wallet ───────────────────────────────────────────────
-function saveFunded(wallet, balanceWei) {
-    const eth = Number(balanceWei) / 1e18
-    const ethStr = eth.toFixed(6)
-    const line = `${wallet.address},${wallet.privateKey},${ethStr} ETH\n`
-    fs.appendFileSync(FUNDED_FILE, line)
-    sendTelegram(wallet.address, wallet.privateKey, ethStr)
-    process.send({ type: 'funded', address: wallet.address, eth: ethStr })
-}
-
-// ─── Generate wallet ──────────────────────────────────────────────────
-function generateWallet() {
-    const privBytes = randomBytes(32)
-    const pubKey = secp256k1.getPublicKey(privBytes, false).slice(1)
-    const hash = keccak256(pubKey)
-    return {
-        address: '0x' + Buffer.from(hash.slice(12)).toString('hex'),
-        privateKey: '0x' + Buffer.from(privBytes).toString('hex'),
-    }
