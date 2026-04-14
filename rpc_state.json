@@ -1,8 +1,8 @@
 [
   {
     "url": "http://202.61.239.89:8545",
-    "latency": 296,
-    "successes": 295
+    "latency": 301,
+    "successes": 442
   },
   {
     "url": "https://eth.drpc.org",
