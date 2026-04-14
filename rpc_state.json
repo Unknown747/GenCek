@@ -1,13 +1,13 @@
 [
   {
     "url": "http://202.61.239.89:8545",
-    "latency": 689,
-    "successes": 816
+    "latency": 1076,
+    "successes": 174
   },
   {
     "url": "https://eth.drpc.org",
-    "latency": 999,
-    "successes": 0
+    "latency": 250,
+    "successes": 2670
   },
   {
     "url": "https://1rpc.io/eth",
@@ -36,22 +36,22 @@
   },
   {
     "url": "https://eth-mainnet.public.blastapi.io",
-    "latency": 359,
-    "successes": 330
+    "latency": 736,
+    "successes": 0
   },
   {
     "url": "https://eth.api.onfinality.io/public",
-    "latency": 216,
-    "successes": 310
+    "latency": 719,
+    "successes": 0
   },
   {
     "url": "https://rpc.flashbots.net",
-    "latency": 732,
-    "successes": 1
+    "latency": 926,
+    "successes": 0
   },
   {
     "url": "https://eth.meowrpc.com",
-    "latency": 766,
+    "latency": 812,
     "successes": 0
   }
 ]

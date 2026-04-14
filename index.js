@@ -39,6 +39,7 @@ const workerIsExtra      = {}      // idx -> true if auto-scaled (not base)
 const workerShuttingDown = new Set()
 const lastHeartbeat      = {}
 const workerRpcStats     = {}
+let   isShuttingDown     = false   // set to true during graceful shutdown
 
 // ─── All-time stats ────────────────────────────────────────────────────
 
@@ -186,6 +187,7 @@ function spawnWorker(idx) {
     })
 
     child.on('exit', code => {
+        if (isShuttingDown) return
         if (workerShuttingDown.has(idx)) {
             workerShuttingDown.delete(idx)
             workers[idx] = null
@@ -236,18 +238,20 @@ sendTelegram(
 // ─── Graceful shutdown ─────────────────────────────────────────────────
 
 function shutdown(signal) {
+    if (isShuttingDown) return
+    isShuttingDown = true
+
     log(`\n[${signal}] Shutting down — saving data...`.yellow)
     saveStats(true)
     saveSessionReport()
-    const elapsed = Math.floor((Date.now() - startTime) / 1000)
     sendTelegram(
         `🔴 <b>Checker Stopped</b> (${signal})\n` +
         `Session: ${sessionChecked.toLocaleString()} checked | ${formatUptime(Date.now() - startTime)} uptime\n` +
         `Peak rate: ${peakRate.toLocaleString()}/s | Peak workers: ${peakWorkers}\n` +
         `Funded this session: ${getFundedCount()}`
     )
-    workers.forEach(w => { try { w && w.kill(signal) } catch (_) {} })
-    setTimeout(() => process.exit(0), 1000)
+    workers.forEach(w => { try { w && w.kill('SIGTERM') } catch (_) {} })
+    setTimeout(() => process.exit(0), 1500)
 }
 
 process.on('SIGTERM', () => shutdown('SIGTERM'))

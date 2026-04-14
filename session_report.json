@@ -1,0 +1,15 @@
+{
+  "started": "2026-04-14T21:30:28.384Z",
+  "ended": "2026-04-14T21:51:38.978Z",
+  "duration_seconds": 1270,
+  "session_checked": 2009900,
+  "all_time_total": 5353300,
+  "avg_rate": 1581,
+  "peak_rate": 2380,
+  "workers_base": 2,
+  "workers_peak": 2,
+  "batch_size": 200,
+  "funded_this_session": 0,
+  "rpc_alive": 11,
+  "rpc_dead": 0
+}

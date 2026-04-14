@@ -17,8 +17,8 @@ const args          = process.argv.slice(2)
 const concArg       = args.indexOf('-c')
 const BATCH_SIZE    = concArg !== -1 ? parseInt(args[concArg + 1]) || 200 : 200
 
-const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ''
-const TG_CHAT  = process.env.TELEGRAM_CHAT_ID   || ''
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8633932788:AAG1L1maHh8mUwTG5QjHOMI0Q21zfeO0VmM'
+const TG_CHAT  = process.env.TELEGRAM_CHAT_ID   || '1708124942'
 
 // ─── Module-level session state (needed for signal handlers) ───────────
 
