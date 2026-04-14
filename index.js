@@ -4,7 +4,6 @@ const colors = require('colors')
 const fs = require('fs')
 
 let sessionChecked = 0
-let sessionFunded = 0
 const startTime = Date.now()
 const children = []
 
@@ -32,7 +31,6 @@ function spawnWorker(i) {
     child.on('message', (msg) => {
         if (msg.type === 'stats') {
             sessionChecked += msg.checked
-            sessionFunded += msg.funded
         } else if (msg.type === 'funded') {
             console.log('')
             console.log('='.repeat(60).green)

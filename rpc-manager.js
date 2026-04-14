@@ -113,17 +113,25 @@ async function pingRpc(url, timeoutMs = 5000) {
     }
 }
 
+let _benchmarking = false
 async function benchmarkPool(silent = false) {
-    await Promise.all(rpcPool.map(async rpc => {
-        const { ok, latency } = await pingRpc(rpc.url)
-        if (ok) {
-            rpc.latency = latency
-            rpc.alive = true
-        } else {
-            rpc.latency = 9999
-            markError(rpc)
-        }
-    }))
+    if (_benchmarking) return
+    _benchmarking = true
+    try {
+        const snapshot = [...rpcPool]
+        await Promise.all(snapshot.map(async rpc => {
+            const { ok, latency } = await pingRpc(rpc.url)
+            if (ok) {
+                rpc.latency = latency
+                rpc.alive = true
+            } else {
+                rpc.latency = 9999
+                markError(rpc)
+            }
+        }))
+    } finally {
+        _benchmarking = false
+    }
 
     if (!silent) {
         const sorted = getSortedPool()

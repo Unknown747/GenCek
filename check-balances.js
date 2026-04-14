@@ -116,7 +116,7 @@ function getFundedCount() {
 }
 
 function saveFunded(entry, balance) {
-    const ethStr = ethers.utils.formatEther(balance.toString())
+    const ethStr = ethers.formatEther(balance)
     fs.appendFileSync(FUNDED_FILE, `${entry.address},${entry.key},${ethStr} ETH\n`)
     sendTelegram(
         `🚨 <b>FUNDED WALLET FOUND</b>\n` +
@@ -162,8 +162,8 @@ async function main() {
         const entries = readAllEntries()
 
         if (entries.length === 0) {
-            process.stdout.write(`\r  [~] Waiting for wallets... | Funded: ${getFundedCount()}   `)
-            await new Promise(r => setTimeout(r, 2000))
+            console.log(`  [~] Waiting for entries in hits.txt... | Funded: ${getFundedCount()}`)
+            await new Promise(r => setTimeout(r, 5000))
             continue
         }
 
@@ -174,6 +174,12 @@ async function main() {
 
         const aliveCount = rpcPool.filter(r => r.alive).length
         console.log(`\n  Checking ${entries.length.toLocaleString()} wallets | ${batches.length} batches | ${aliveCount}/${rpcPool.length} RPCs alive`.cyan)
+
+        if (aliveCount === 0) {
+            console.log('  [!] No alive RPCs — waiting 10s before retry...'.yellow)
+            await new Promise(r => setTimeout(r, 10000))
+            continue
+        }
 
         const MAX_PARALLEL = Math.min(aliveCount * 2, 12, batches.length)
         let batchIdx = 0
