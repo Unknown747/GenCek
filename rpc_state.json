@@ -1,0 +1,37 @@
+[
+  {
+    "url": "http://202.61.239.89:8545",
+    "latency": 296,
+    "successes": 295
+  },
+  {
+    "url": "https://eth.drpc.org",
+    "latency": 999,
+    "successes": 0
+  },
+  {
+    "url": "https://1rpc.io/eth",
+    "latency": 999,
+    "successes": 0
+  },
+  {
+    "url": "https://ethereum.publicnode.com",
+    "latency": 999,
+    "successes": 0
+  },
+  {
+    "url": "https://eth.llamarpc.com",
+    "latency": 999,
+    "successes": 0
+  },
+  {
+    "url": "https://rpc.ankr.com/eth",
+    "latency": 999,
+    "successes": 0
+  },
+  {
+    "url": "https://cloudflare-eth.com",
+    "latency": 999,
+    "successes": 0
+  }
+]

