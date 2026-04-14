@@ -1,8 +1,8 @@
 [
   {
     "url": "http://202.61.239.89:8545",
-    "latency": 301,
-    "successes": 442
+    "latency": 689,
+    "successes": 816
   },
   {
     "url": "https://eth.drpc.org",
@@ -32,6 +32,26 @@
   {
     "url": "https://cloudflare-eth.com",
     "latency": 999,
+    "successes": 0
+  },
+  {
+    "url": "https://eth-mainnet.public.blastapi.io",
+    "latency": 359,
+    "successes": 330
+  },
+  {
+    "url": "https://eth.api.onfinality.io/public",
+    "latency": 216,
+    "successes": 310
+  },
+  {
+    "url": "https://rpc.flashbots.net",
+    "latency": 732,
+    "successes": 1
+  },
+  {
+    "url": "https://eth.meowrpc.com",
+    "latency": 766,
     "successes": 0
   }
 ]
